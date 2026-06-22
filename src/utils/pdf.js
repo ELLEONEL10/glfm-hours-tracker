@@ -179,7 +179,7 @@ export function exportPDF(entries, currentUser, selMonth, sigDataURL, logoDataUR
   doc.setFontSize(6.5);
   doc.setFont('helvetica', 'normal');
   doc.text(t('pdfSigLabel'), ML + 5, FY + sigBoxH - 7);
-  doc.text(currentUser.fullname, ML + 5, FY + sigBoxH - 3);
+  doc.text(currentUser.fullname, ML + 5, FY + sigBoxH - 1);
 
   doc.setFontSize(6);
   doc.setTextColor(...MID);
