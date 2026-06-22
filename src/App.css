@@ -46,6 +46,10 @@ input[type=text], input[type=password], input[type=date], input[type=number], se
 .light-input:focus { border-color:var(--accent) !important; box-shadow:0 0 0 3px rgba(200,169,110,0.12) !important; }
 select.light-input option { background:var(--white); color:var(--black); }
 textarea.light-input { resize:vertical; min-height:60px; }
+.pwd-wrap { position:relative; display:flex; align-items:center; }
+.pwd-wrap input { padding-right:44px; }
+.pwd-toggle { position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:var(--mid); padding:6px; display:flex; align-items:center; justify-content:center; border-radius:6px; }
+.pwd-toggle:hover { color:var(--black); }
 
 /* BUTTONS */
 .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:13px 20px; border-radius:8px; border:none; font-family:var(--font); font-size:0.9rem; font-weight:600; cursor:pointer; transition:all 0.15s; width:100%; letter-spacing:0.01em; }
@@ -188,3 +192,26 @@ textarea.light-input { resize:vertical; min-height:60px; }
   .page-content { padding-left:20px; padding-right:20px; }
   .modal-sheet { border-radius:20px; margin-bottom:20px; }
 }
+
+/* DARK MODE */
+html.dark {
+  --black:       #E8E8E8;
+  --off-white:   #2A2A2A;
+  --white:       #1A1A1A;
+  --accent:      #C8A96E;
+  --accent-dark: #D4B97A;
+  --mid:         #8A8A8A;
+  --line:        #333333;
+  --error:       #E74C3C;
+  --success:     #2ECC71;
+  --surface:     #111111;
+  --shadow:      0 1px 3px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.2);
+}
+
+html.dark .login-form { background:#1A1A1A; border-color:#333; }
+html.dark .login-form code { background:#333; }
+html.dark #screen-login { background:#0A0A0A; }
+html.dark .sig-wrap { background:#1A1A1A; }
+html.dark .stat-card.accent { background:var(--black); }
+html.dark .stat-card.accent .stat-val { color:var(--accent); }
+html.dark .admin-header { border:1px solid var(--line); }
