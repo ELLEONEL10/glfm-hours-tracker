@@ -149,11 +149,6 @@ export function exportPDF(entries, currentUser, selMonth, sigDataURL, logoDataUR
   doc.setFont('helvetica', 'normal');
   doc.text(`${entries.length} ${t('pdfDaysLogged')}`, ML + 40, FY + 19);
 
-  doc.setTextColor(...WHITE);
-  doc.setFontSize(7.5);
-  doc.setFont('helvetica', 'normal');
-  doc.text(`${monthName} ${yr}  ·  ${currentUser.fullname}`, PW - MR, FY + 14, { align: 'right' });
-
   // --- SIGNATURE & OFFICE ---
   FY += barH + 16;
   if (FY + 50 > PH - 16) { doc.addPage(); FY = 20; }
