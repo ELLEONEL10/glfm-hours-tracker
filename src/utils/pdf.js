@@ -12,77 +12,72 @@ export function exportPDF(entries, currentUser, selMonth, sigDataURL, logoDataUR
 
   const BLACK  = [10, 10, 10];
   const GOLD   = [200, 169, 110];
-  const GOLD_D = [168, 137, 62];
   const MID    = [130, 130, 130];
   const LIGHT  = [240, 239, 235];
   const WHITE  = [255, 255, 255];
-  const OFFWH  = [245, 244, 240];
 
+  // --- HEADER ---
   doc.setFillColor(...BLACK);
-  doc.rect(0, 0, PW, 36, 'F');
+  doc.rect(0, 0, PW, 32, 'F');
 
   if (logoDataURL) {
     try {
-      doc.addImage(logoDataURL, 'PNG', ML, 5, 22, 22);
+      doc.addImage(logoDataURL, 'PNG', ML, 5, 20, 20);
     } catch (e) { console.warn('PDF logo error:', e); }
   }
 
   doc.setTextColor(...WHITE);
-  doc.setFontSize(15);
+  doc.setFontSize(13);
   doc.setFont('helvetica', 'bold');
-  doc.text('GLFM', ML + 28, 15);
-  doc.setFontSize(7.5);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(...GOLD);
-  doc.text(t('appSubtitle').toUpperCase(), ML + 28, 21);
-
-  doc.setTextColor(...WHITE);
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'bold');
-  doc.text(`${monthName} ${yr}`, PW - MR, 15, { align: 'right' });
+  doc.text('GLFM', ML + 26, 13);
   doc.setFontSize(7);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(...GOLD);
-  doc.text(t('pdfMonthlyReport'), PW - MR, 21, { align: 'right' });
+  doc.text(t('appSubtitle').toUpperCase(), ML + 26, 20);
 
-  let Y = 44;
-  doc.setFillColor(...OFFWH);
-  doc.roundedRect(ML, Y, CW, 26, 3, 3, 'F');
+  doc.setTextColor(...WHITE);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`${monthName} ${yr}`, PW - MR, 13, { align: 'right' });
+  doc.setFontSize(6.5);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(...GOLD);
+  doc.text(t('pdfMonthlyReport'), PW - MR, 20, { align: 'right' });
 
-  const colMid = ML + CW / 2 + 6;
-  const labels = [t('pdfEmpName'), t('pdfPeriod'), t('pdfEmpId'), t('pdfGenerated')];
-  const vals = [
-    currentUser.fullname,
-    `${monthName} ${yr}`,
-    currentUser.id,
-    new Date().toLocaleDateString(lang === 'de' ? 'de-DE' : 'en-GB', { day: '2-digit', month: 'long', year: 'numeric' })
-  ];
+  // --- EMPLOYEE INFO ---
+  let Y = 42;
+  doc.setDrawColor(...LIGHT);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(ML, Y, CW, 24, 2, 2, 'S');
 
   doc.setFontSize(6.5);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(...MID);
-  doc.text(labels[0], ML + 6, Y + 7);
-  doc.text(labels[1], ML + 6, Y + 18);
+  doc.text(t('pdfEmpName'), ML + 8, Y + 7);
+  doc.text(t('pdfPeriod'), ML + 8, Y + 17);
   doc.setFontSize(9);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(...BLACK);
-  doc.text(vals[0], ML + 6, Y + 12);
-  doc.setFontSize(8.5);
+  doc.text(currentUser.fullname, ML + 8, Y + 12);
+  doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
-  doc.text(vals[1], ML + 6, Y + 23);
+  doc.text(`${monthName} ${yr}`, ML + 8, Y + 22);
 
+  const colMid = ML + CW / 2 + 8;
   doc.setFontSize(6.5);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(...MID);
-  doc.text(labels[2], colMid, Y + 7);
-  doc.text(labels[3], colMid, Y + 18);
-  doc.setFontSize(8.5);
+  doc.text(t('pdfEmpId'), colMid, Y + 7);
+  doc.text(t('pdfGenerated'), colMid, Y + 17);
+  doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(...BLACK);
-  doc.text(vals[2], colMid, Y + 12);
-  doc.text(vals[3], colMid, Y + 23);
+  doc.text(currentUser.id, colMid, Y + 12);
+  const genDate = new Date().toLocaleDateString(lang === 'de' ? 'de-DE' : 'en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+  doc.text(genDate, colMid, Y + 22);
 
-  Y += 32;
+  // --- TABLE ---
+  Y += 30;
 
   const tableHead = [[
     t('pdfTableNum'), t('pdfTableDate'), t('pdfTablePlace'),
@@ -110,12 +105,12 @@ export function exportPDF(entries, currentUser, selMonth, sigDataURL, logoDataUR
     tableWidth: CW,
     styles: {
       font: 'helvetica', fontSize: 8.5,
-      cellPadding: { top: 5, bottom: 5, left: 5, right: 4 },
-      textColor: BLACK, lineColor: [220, 219, 215], lineWidth: 0.25
+      cellPadding: { top: 4, bottom: 4, left: 5, right: 4 },
+      textColor: BLACK, lineColor: LIGHT, lineWidth: 0.3
     },
     headStyles: {
       fillColor: BLACK, textColor: GOLD, fontStyle: 'bold', fontSize: 7.5,
-      cellPadding: { top: 6, bottom: 6, left: 5, right: 4 }
+      cellPadding: { top: 5, bottom: 5, left: 5, right: 4 }
     },
     alternateRowStyles: { fillColor: [248, 248, 246] },
     columnStyles: {
@@ -123,7 +118,7 @@ export function exportPDF(entries, currentUser, selMonth, sigDataURL, logoDataUR
       1: { cellWidth: 28 },
       2: { cellWidth: 44 },
       3: { cellWidth: 32 },
-      4: { cellWidth: 20, halign: 'center', fontStyle: 'bold', textColor: GOLD_D },
+      4: { cellWidth: 20, halign: 'center', fontStyle: 'bold', textColor: GOLD },
       5: { cellWidth: 'auto', textColor: MID, fontSize: 7.5 }
     },
     didParseCell(data) {
@@ -133,79 +128,81 @@ export function exportPDF(entries, currentUser, selMonth, sigDataURL, logoDataUR
     }
   });
 
-  let FY = doc.lastAutoTable.finalY + 8;
-
+  // --- TOTAL BAR ---
+  let FY = doc.lastAutoTable.finalY + 10;
   const totalHrs = entries.reduce((s, e) => s + (parseFloat(e.hours) || 0), 0);
-  const barH = 26;
+  const barH = 22;
+
   doc.setFillColor(...BLACK);
-  doc.roundedRect(ML, FY, CW, barH, 3, 3, 'F');
+  doc.roundedRect(ML, FY, CW, barH, 2, 2, 'F');
 
   doc.setTextColor(...GOLD);
-  doc.setFontSize(7);
+  doc.setFontSize(6.5);
   doc.setFont('helvetica', 'bold');
-  doc.text(t('pdfTotalLabel'), ML + 10, FY + 9);
-  doc.setFontSize(18);
+  doc.text(t('pdfTotalLabel'), ML + 10, FY + 8);
+  doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
-  doc.text(fmtHrs(totalHrs), ML + 10, FY + 21);
+  doc.text(fmtHrs(totalHrs), ML + 10, FY + 19);
 
   doc.setTextColor(...MID);
-  doc.setFontSize(8);
+  doc.setFontSize(7.5);
   doc.setFont('helvetica', 'normal');
-  doc.text(`${entries.length} ${t('pdfDaysLogged')}`, ML + 42, FY + 21);
+  doc.text(`${entries.length} ${t('pdfDaysLogged')}`, ML + 40, FY + 19);
 
   doc.setTextColor(...WHITE);
-  doc.setFontSize(8);
+  doc.setFontSize(7.5);
   doc.setFont('helvetica', 'normal');
-  doc.text(`${monthName} ${yr}  ·  ${currentUser.fullname}`, PW - MR, FY + 16, { align: 'right' });
+  doc.text(`${monthName} ${yr}  ·  ${currentUser.fullname}`, PW - MR, FY + 14, { align: 'right' });
 
-  FY += barH + 14;
+  // --- SIGNATURE & OFFICE ---
+  FY += barH + 16;
+  if (FY + 50 > PH - 16) { doc.addPage(); FY = 20; }
 
-  if (FY + 55 > PH - 16) { doc.addPage(); FY = 20; }
-
-  const sigBoxW = 88;
-  const sigBoxH = 44;
-  const offBoxW = 58;
-  const offBoxH = 44;
+  const sigBoxW = 86;
+  const sigBoxH = 42;
+  const offBoxW = 56;
+  const offBoxH = 42;
 
   doc.setDrawColor(...LIGHT);
-  doc.setLineWidth(0.35);
+  doc.setLineWidth(0.3);
   doc.roundedRect(ML, FY, sigBoxW, sigBoxH, 2, 2, 'S');
 
   if (sigDataURL) {
     try {
-      doc.addImage(sigDataURL, 'PNG', ML + 2, FY + 2, sigBoxW - 4, sigBoxH - 16);
+      doc.addImage(sigDataURL, 'PNG', ML + 3, FY + 2, sigBoxW - 6, sigBoxH - 16);
     } catch (imgErr) { console.warn('PDF addImage error:', imgErr); }
   }
 
   doc.setDrawColor(...LIGHT);
-  doc.line(ML + 4, FY + sigBoxH - 12, ML + sigBoxW - 4, FY + sigBoxH - 12);
+  doc.line(ML + 5, FY + sigBoxH - 11, ML + sigBoxW - 5, FY + sigBoxH - 11);
   doc.setTextColor(...MID);
-  doc.setFontSize(7);
-  doc.setFont('helvetica', 'normal');
-  doc.text(t('pdfSigLabel'), ML + 4, FY + sigBoxH - 7);
-  doc.text(`${currentUser.fullname}`, ML + 4, FY + sigBoxH - 3);
-
   doc.setFontSize(6.5);
+  doc.setFont('helvetica', 'normal');
+  doc.text(t('pdfSigLabel'), ML + 5, FY + sigBoxH - 7);
+  doc.text(currentUser.fullname, ML + 5, FY + sigBoxH - 3);
+
+  doc.setFontSize(6);
   doc.setTextColor(...MID);
   const today = new Date().toLocaleDateString(lang === 'de' ? 'de-DE' : 'en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
   doc.text(`${t('pdfSigDate')}: ${today}`, ML, FY + sigBoxH + 5);
 
   const offX = PW - MR - offBoxW;
   doc.setDrawColor(...LIGHT);
-  doc.setLineWidth(0.35);
+  doc.setLineWidth(0.3);
   doc.roundedRect(offX, FY, offBoxW, offBoxH, 2, 2, 'S');
   doc.setTextColor(...MID);
-  doc.setFontSize(6.5);
+  doc.setFontSize(6);
   doc.setFont('helvetica', 'bold');
   doc.text(t('pdfOfficeLabel'), offX + offBoxW / 2, FY + 9, { align: 'center' });
-  doc.setFontSize(6.5);
+  doc.setFontSize(6);
   doc.setFont('helvetica', 'normal');
   doc.text(t('pdfOfficeStamp'), offX + offBoxW / 2, FY + sigBoxH - 6, { align: 'center' });
 
+  // --- FOOTER ---
   const footY = PH - 10;
   doc.setFillColor(...BLACK);
-  doc.rect(0, footY - 5, PW, 18, 'F');
-  doc.setFontSize(7.5);
+  doc.rect(0, footY - 5, PW, 16, 'F');
+  doc.setFontSize(7);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(...GOLD);
   doc.text('GLFM', ML, footY + 2);
