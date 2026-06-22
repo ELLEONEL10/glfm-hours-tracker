@@ -7,7 +7,7 @@ export function exportPDF(entries, currentUser, selMonth, sigDataURL, logoDataUR
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
-  const PW = 210, PH = 297, ML = 16, MR = 16;
+  const PW = 210, PH = 297, ML = 20, MR = 20;
   const CW = PW - ML - MR;
 
   const BLACK  = [10, 10, 10];

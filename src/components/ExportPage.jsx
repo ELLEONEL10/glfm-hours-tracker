@@ -20,13 +20,13 @@ export default function ExportPage({ entries, currentUser, currentDate, showToas
   useEffect(() => {
     const img = new Image();
     img.onload = () => {
-      const maxW = 120;
+      const maxW = 400;
       const scale = Math.min(1, maxW / img.width);
       const c = document.createElement('canvas');
       c.width = Math.round(img.width * scale);
       c.height = Math.round(img.height * scale);
       c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-      setLogoDataURL(c.toDataURL('image/jpeg', 0.6));
+      setLogoDataURL(c.toDataURL('image/png'));
     };
     img.src = logoSrc;
   }, []);
