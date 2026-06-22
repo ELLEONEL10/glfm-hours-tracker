@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/ELLEONEL10/glfm-hours-tracker#readme",
   "dependencies": {
+    "firebase": "^11.10.0",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
     "react": "^19.2.7",

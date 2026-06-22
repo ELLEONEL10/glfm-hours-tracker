@@ -14,6 +14,7 @@ export default function ExportPage({ entries, currentUser, currentDate, showToas
 
   const [selMonth, setSelMonth] = useState(monthKey(currentDate));
   const [sigDataURL, setSigDataURL] = useState(null);
+  const [sigClearKey, setSigClearKey] = useState(0);
   const [logoDataURL, setLogoDataURL] = useState(null);
 
   useEffect(() => {
@@ -42,6 +43,11 @@ export default function ExportPage({ entries, currentUser, currentDate, showToas
     showToast(t('toastPdfDownloaded'), 'ok');
   };
 
+  const handleClear = () => {
+    setSigDataURL(null);
+    setSigClearKey(k => k + 1);
+  };
+
   return (
     <div className="page" id="page-export">
       <div className="section-header" style={{ marginBottom: 20 }}>
@@ -63,14 +69,14 @@ export default function ExportPage({ entries, currentUser, currentDate, showToas
       <div className="export-card">
         <h3>{t('sigTitle')}</h3>
         <p>{t('sigDesc')}</p>
-        <SignaturePad sigDataURL={sigDataURL} onSigChange={setSigDataURL} />
+        <SignaturePad key={sigClearKey} sigDataURL={sigDataURL} onSigChange={setSigDataURL} />
         <div className="sig-actions">
           <div>
             <span className={'sig-status ' + (sigHasContent() ? 'signed' : 'empty')}>
               {sigHasContent() ? t('sigSigned') : t('sigEmpty')}
             </span>
           </div>
-          <button className="btn btn-ghost btn-sm" onClick={() => setSigDataURL(null)}>{t('btnClearSig')}</button>
+          <button className="btn btn-ghost btn-sm" onClick={handleClear}>{t('btnClearSig')}</button>
         </div>
         <button className="btn btn-primary" onClick={handleExport}>{t('btnExport')}</button>
       </div>

@@ -1,40 +1,30 @@
-import { useState, useCallback } from 'react';
-import { loadUsers, saveUsers, hashPwd, uid } from '../utils/storage';
+import { useState, useEffect, useCallback } from 'react';
+import { onUsersSnapshot, deleteUserDoc } from '../firebase/db';
+import { hasConfig } from '../firebase/config';
 
 export function useUsers() {
-  const [users, setUsers] = useState(() => loadUsers());
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const refreshUsers = useCallback(() => {
-    setUsers(loadUsers());
-  }, []);
-
-  const createUser = useCallback(({ fullname, username, password, role }) => {
-    const all = loadUsers();
-    if (all.find(u => u.username === username)) {
-      return { error: 'errUsernameExists' };
+  useEffect(() => {
+    if (!hasConfig) {
+      setLoading(false);
+      return;
     }
-    if (password.length < 6) {
-      return { error: 'errPwdLength' };
+    const unsub = onUsersSnapshot((data) => {
+      setUsers(data);
+      setLoading(false);
+    });
+    return unsub;
+  }, []);
+
+  const deleteUser = useCallback(async (id) => {
+    try {
+      await deleteUserDoc(id);
+    } catch (err) {
+      console.error('Delete user error:', err);
     }
-    const newUser = {
-      id: 'u_' + Date.now().toString(36),
-      username,
-      password: hashPwd(password),
-      fullname,
-      role,
-      created: new Date().toISOString()
-    };
-    all.push(newUser);
-    saveUsers(all);
-    setUsers(all);
-    return { user: newUser };
   }, []);
 
-  const deleteUser = useCallback((id) => {
-    const all = loadUsers().filter(u => u.id !== id);
-    saveUsers(all);
-    setUsers(all);
-  }, []);
-
-  return { users, setUsers, refreshUsers, createUser, deleteUser };
+  return { users, loading, deleteUser };
 }

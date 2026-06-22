@@ -179,6 +179,8 @@ textarea.light-input { resize:vertical; min-height:60px; }
 ::-webkit-scrollbar { width:4px; }
 ::-webkit-scrollbar-thumb { background:var(--line); border-radius:2px; }
 
+.login-form code { background: #2A2A2A; padding: 2px 6px; border-radius: 4px; font-size: 0.82rem; }
+
 @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
 .fade-in { animation:fadeIn 0.25s ease forwards; }
 
