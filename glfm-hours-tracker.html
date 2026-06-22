@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>GLFM – Arbeitszeiterfassung</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+  :root {
+    --black:       #0A0A0A;
+    --off-white:   #F5F4F0;
+    --white:       #FFFFFF;
+    --accent:      #C8A96E;
+    --accent-dark: #A8893E;
+    --mid:         #8A8A8A;
+    --line:        #E0DFDB;
+    --error:       #C0392B;
+    --success:     #27AE60;
+    --surface:     #FAFAF8;
+    --shadow:      0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06);
+    --radius:      12px;
+    --font:        'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { min-height: 100%; background: var(--surface); color: var(--black); font-family: var(--font); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; }
+  h2 { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.01em; }
+  h3 { font-size: 1rem; font-weight: 600; }
+  p  { color: var(--mid); font-size: 0.875rem; }
+  .app { min-height: 100vh; display: flex; flex-direction: column; }
+
+  /* LOGIN */
+  #screen-login { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; padding:24px; background:var(--black); }
+  .login-box { width:100%; max-width:380px; }
+  .login-logo { text-align:center; margin-bottom:40px; }
+  .logo-circle { width:72px; height:72px; border-radius:50%; background:var(--accent); display:flex; align-items:center; justify-content:center; margin:0 auto 16px; font-size:1.3rem; font-weight:800; color:var(--black); letter-spacing:-0.04em; }
+  .login-logo h1 { color:var(--white); font-size:1.8rem; }
+  .login-logo p  { color:var(--mid); margin-top:6px; font-size:0.78rem; letter-spacing:0.08em; text-transform:uppercase; }
+  .login-form { background:#161616; border:1px solid #2A2A2A; border-radius:var(--radius); padding:28px; }
+  .login-form h2 { color:var(--white); margin-bottom:8px; }
+  .login-form > p { margin-bottom:24px; }
+
+  /* FIELDS */
+  .field { margin-bottom:16px; }
+  .field label { display:block; font-size:0.72rem; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--mid); margin-bottom:6px; }
+  input[type=text], input[type=password], input[type=date], input[type=number], select, textarea {
+    width:100%; padding:12px 14px; border-radius:8px; border:1px solid #2A2A2A;
+    background:#1F1F1F; color:var(--white); font-family:var(--font); font-size:0.95rem;
+    outline:none; transition:border-color 0.15s; -webkit-appearance:none; appearance:none;
+  }
+  .login-form input:focus, .login-form select:focus { border-color:var(--accent); }
+  .light-input { border:1px solid var(--line) !important; background:var(--white) !important; color:var(--black) !important; }
+  .light-input:focus { border-color:var(--accent) !important; box-shadow:0 0 0 3px rgba(200,169,110,0.12) !important; }
+  select.light-input option { background:var(--white); color:var(--black); }
+  textarea.light-input { resize:vertical; min-height:60px; }
+
+  /* BUTTONS */
+  .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:13px 20px; border-radius:8px; border:none; font-family:var(--font); font-size:0.9rem; font-weight:600; cursor:pointer; transition:all 0.15s; width:100%; letter-spacing:0.01em; }
+  .btn-primary { background:var(--accent); color:var(--black); }
+  .btn-primary:hover { background:var(--accent-dark); }
+  .btn-primary:active { transform:scale(0.98); }
+  .btn-ghost { background:transparent; color:var(--black); border:1px solid var(--line); width:auto; padding:10px 16px; }
+  .btn-ghost:hover { background:var(--line); }
+  .btn-danger { background:transparent; color:var(--error); border:1px solid var(--error); width:auto; padding:8px 14px; font-size:0.8rem; }
+  .btn-danger:hover { background:var(--error); color:white; }
+  .btn-sm { padding:8px 14px; font-size:0.8rem; width:auto; }
+  .btn:disabled { opacity:0.5; cursor:not-allowed; }
+
+  /* FEEDBACK */
+  .error-msg { color:var(--error); font-size:0.8rem; margin-top:6px; display:none; }
+  .error-msg.show { display:block; }
+  .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px); background:var(--black); color:var(--white); padding:12px 20px; border-radius:100px; font-size:0.85rem; font-weight:500; z-index:9999; transition:transform 0.3s cubic-bezier(.34,1.56,.64,1); white-space:nowrap; box-shadow:var(--shadow); }
+  .toast.show { transform:translateX(-50%) translateY(0); }
+  .toast.ok  { background:var(--success); }
+  .toast.err { background:var(--error); }
+
+  /* LANG SWITCH */
+  .lang-switch { display:flex; gap:6px; justify-content:center; margin-top:20px; }
+  .lang-btn { background:transparent; border:1px solid #333; color:var(--mid); border-radius:6px; padding:5px 12px; font-size:0.75rem; cursor:pointer; font-family:var(--font); transition:all 0.15s; }
+  .lang-btn.active { border-color:var(--accent); color:var(--accent); }
+
+  /* APP */
+  #screen-app { display:none; flex-direction:column; min-height:100vh; }
+  #screen-app.active { display:flex; }
+
+  /* TOPNAV */
+  .topnav { position:sticky; top:0; z-index:100; background:var(--white); border-bottom:1px solid var(--line); padding:0 16px; display:flex; align-items:center; justify-content:space-between; height:56px; }
+  .nav-brand { display:flex; align-items:center; gap:10px; }
+  .nav-logo { width:32px; height:32px; border-radius:8px; background:var(--black); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:800; letter-spacing:-0.04em; }
+  .nav-title { font-size:0.95rem; font-weight:700; }
+  .nav-sub   { font-size:0.7rem; color:var(--mid); }
+  .nav-right { display:flex; align-items:center; gap:8px; }
+  .avatar { width:32px; height:32px; border-radius:50%; background:var(--accent); color:var(--black); display:flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:700; }
+  .icon-btn { width:36px; height:36px; border-radius:8px; background:transparent; border:1px solid var(--line); display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--black); font-size:1rem; transition:background 0.15s; }
+  .icon-btn:hover { background:var(--line); }
+
+  /* TABBAR */
+  .tabbar { position:fixed; bottom:0; left:0; right:0; z-index:100; background:var(--white); border-top:1px solid var(--line); display:flex; padding-bottom:env(safe-area-inset-bottom); }
+  .tab-item { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:10px 0; cursor:pointer; color:var(--mid); font-size:0.62rem; font-weight:500; gap:3px; border:none; background:transparent; transition:color 0.15s; }
+  .tab-item .tab-icon { font-size:1.2rem; }
+  .tab-item.active { color:var(--accent-dark); }
+
+  /* PAGES */
+  .page-content { flex:1; overflow-y:auto; padding:20px 16px 90px; }
+  .page { display:none; }
+  .page.active { display:block; }
+
+  /* MONTH SELECTOR */
+  .month-selector { display:flex; align-items:center; justify-content:space-between; background:var(--white); border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px; margin-bottom:20px; }
+  .month-nav { width:36px; height:36px; border-radius:8px; border:1px solid var(--line); background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:1rem; color:var(--black); transition:background 0.15s; }
+  .month-nav:hover { background:var(--line); }
+  .month-label { font-weight:700; font-size:1rem; text-align:center; }
+  .month-year  { font-size:0.75rem; color:var(--mid); text-align:center; }
+
+  /* STATS */
+  .stats-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px; }
+  .stat-card { background:var(--white); border:1px solid var(--line); border-radius:var(--radius); padding:16px; }
+  .stat-card .stat-val { font-size:1.8rem; font-weight:800; letter-spacing:-0.04em; color:var(--black); }
+  .stat-card .stat-label { font-size:0.68rem; color:var(--mid); text-transform:uppercase; letter-spacing:0.06em; margin-top:2px; }
+  .stat-card.accent { background:var(--black); border-color:var(--black); }
+  .stat-card.accent .stat-val { color:var(--accent); }
+  .stat-card.accent .stat-label { color:var(--mid); }
+
+  /* SECTION */
+  .section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+  .section-header h2 { font-size:0.85rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--mid); font-weight:600; }
+
+  /* ENTRY CARDS */
+  .entry-list { display:flex; flex-direction:column; gap:10px; }
+  .entry-card { background:var(--white); border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px; display:flex; align-items:flex-start; gap:14px; }
+  .entry-date-badge { min-width:44px; text-align:center; background:var(--off-white); border-radius:8px; padding:6px 0; }
+  .entry-date-badge .day { font-size:1.2rem; font-weight:800; line-height:1; }
+  .entry-date-badge .mon { font-size:0.6rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--mid); }
+  .entry-info { flex:1; min-width:0; }
+  .entry-place { font-weight:600; font-size:0.95rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .entry-range { font-size:0.75rem; color:var(--mid); margin-top:2px; }
+  .entry-hours { font-size:1.1rem; font-weight:700; color:var(--accent-dark); margin-top:4px; }
+  .entry-actions { display:flex; flex-direction:column; gap:6px; }
+  .entry-act-btn { width:28px; height:28px; border-radius:6px; border:1px solid var(--line); background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:0.75rem; color:var(--mid); transition:all 0.15s; }
+  .entry-act-btn:hover { border-color:var(--black); color:var(--black); }
+  .entry-act-btn.del:hover { border-color:var(--error); color:var(--error); }
+
+  /* MODAL */
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:500; display:flex; align-items:flex-end; justify-content:center; opacity:0; pointer-events:none; transition:opacity 0.2s; }
+  .modal-overlay.open { opacity:1; pointer-events:all; }
+  .modal-sheet { background:var(--white); border-radius:20px 20px 0 0; padding:28px 20px 40px; width:100%; max-width:500px; transform:translateY(100%); transition:transform 0.3s cubic-bezier(.34,1.1,.64,1); max-height:95vh; overflow-y:auto; }
+  .modal-overlay.open .modal-sheet { transform:translateY(0); }
+  .modal-handle { width:36px; height:4px; border-radius:2px; background:var(--line); margin:0 auto 24px; }
+  .modal-title { font-size:1.1rem; font-weight:700; margin-bottom:20px; }
+
+  /* SIGNATURE */
+  .sig-wrap { border:2px dashed var(--line); border-radius:10px; overflow:hidden; position:relative; background:#FAFAF8; cursor:crosshair; user-select:none; -webkit-user-select:none; }
+  .sig-wrap:hover { border-color:var(--accent); }
+  #signature-canvas { display:block; width:100%; height:160px; touch-action:none; }
+  .sig-actions { display:flex; justify-content:space-between; align-items:center; margin-top:8px; margin-bottom:16px; }
+  .sig-hint { font-size:0.72rem; color:var(--mid); }
+  .sig-status { font-size:0.72rem; font-weight:600; }
+  .sig-status.signed { color:var(--success); }
+  .sig-status.empty  { color:var(--mid); }
+
+  /* ADMIN */
+  .admin-header { background:var(--black); color:var(--white); border-radius:var(--radius); padding:18px 18px 16px; margin-bottom:20px; }
+  .admin-header h2 { color:var(--accent); font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:4px; }
+  .admin-header h1 { color:var(--white); font-size:1.1rem; }
+  .user-row { background:var(--white); border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px; display:flex; align-items:center; gap:14px; margin-bottom:10px; }
+  .user-av { width:40px; height:40px; border-radius:50%; background:var(--off-white); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:0.8rem; font-weight:700; flex-shrink:0; }
+  .user-info { flex:1; min-width:0; }
+  .user-name { font-weight:600; font-size:0.95rem; }
+  .user-role-txt { font-size:0.72rem; color:var(--mid); }
+  .badge { display:inline-flex; align-items:center; padding:2px 8px; border-radius:100px; font-size:0.68rem; font-weight:600; }
+  .badge-gold { background:rgba(200,169,110,0.15); color:var(--accent-dark); }
+  .badge-gray { background:var(--off-white); color:var(--mid); }
+
+  /* EXPORT */
+  .export-card { background:var(--white); border:1px solid var(--line); border-radius:var(--radius); padding:20px; margin-bottom:16px; }
+  .export-card h3 { margin-bottom:6px; }
+  .export-card > p { margin-bottom:16px; }
+
+  /* EMPTY */
+  .empty-state { text-align:center; padding:48px 20px; color:var(--mid); }
+  .empty-icon { font-size:2.5rem; margin-bottom:12px; }
+  .empty-state h3 { font-size:1rem; color:var(--black); margin-bottom:6px; }
+
+  /* DIVIDER */
+  .divider { border:none; border-top:1px solid var(--line); margin:20px 0; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width:4px; }
+  ::-webkit-scrollbar-thumb { background:var(--line); border-radius:2px; }
+
+  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+  .fade-in { animation:fadeIn 0.25s ease forwards; }
+
+  @media (min-width:480px) {
+    .page-content { padding-left:20px; padding-right:20px; }
+    .modal-sheet { border-radius:20px; margin-bottom:20px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ═══ LOGIN ═══ -->
+<div id="screen-login">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="logo-circle">GLFM</div>
+      <h1>GLFM</h1>
+      <p data-i18n="appSubtitle">Arbeitszeiterfassung</p>
+    </div>
+    <div class="login-form">
+      <h2 data-i18n="loginTitle">Willkommen</h2>
+      <p data-i18n="loginSub">Bitte melden Sie sich an</p>
+      <div class="field">
+        <label data-i18n="labelUsername">Benutzername</label>
+        <input type="text" id="login-username" autocomplete="username" autocapitalize="none" data-i18n-placeholder="placeholderUsername">
+      </div>
+      <div class="field">
+        <label data-i18n="labelPassword">Passwort</label>
+        <input type="password" id="login-password" autocomplete="current-password" data-i18n-placeholder="placeholderPassword">
+        <div class="error-msg" id="login-error" data-i18n="loginError">Benutzername oder Passwort falsch.</div>
+      </div>
+      <button class="btn btn-primary" id="btn-login" data-i18n="btnLogin">Anmelden</button>
+    </div>
+    <div class="lang-switch">
+      <button class="lang-btn active" onclick="setLang('de')">DE</button>
+      <button class="lang-btn" onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ APP ═══ -->
+<div id="screen-app">
+  <nav class="topnav">
+    <div class="nav-brand">
+      <div class="nav-logo">GLFM</div>
+      <div>
+        <div class="nav-title" id="nav-greeting">GLFM</div>
+        <div class="nav-sub" id="nav-role">–</div>
+      </div>
+    </div>
+    <div class="nav-right">
+      <div class="avatar" id="nav-avatar">–</div>
+      <button class="icon-btn" id="btn-logout" title="Abmelden">⏏</button>
+    </div>
+  </nav>
+
+  <div class="page-content">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="month-selector">
+        <button class="month-nav" id="btn-prev-month">‹</button>
+        <div>
+          <div class="month-label" id="current-month-name">–</div>
+          <div class="month-year"  id="current-month-year">–</div>
+        </div>
+        <button class="month-nav" id="btn-next-month">›</button>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card accent">
+          <div class="stat-val" id="stat-total-hours">0</div>
+          <div class="stat-label" data-i18n="statHours">Stunden gesamt</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="stat-entries">0</div>
+          <div class="stat-label" data-i18n="statDays">Tage erfasst</div>
+        </div>
+      </div>
+      <div class="section-header">
+        <h2 data-i18n="sectionEntries">Einträge dieses Monats</h2>
+        <button class="btn btn-ghost btn-sm" id="btn-open-add" data-i18n="btnAddDay">+ Tag hinzufügen</button>
+      </div>
+      <div class="entry-list" id="entry-list"></div>
+    </div>
+
+    <!-- EXPORT -->
+    <div class="page" id="page-export">
+      <div class="section-header" style="margin-bottom:20px;">
+        <h2 data-i18n="tabExport">PDF-Export</h2>
+      </div>
+      <div class="export-card">
+        <h3 data-i18n="exportTitle">Monatsbericht</h3>
+        <p data-i18n="exportDesc">Erstellen und laden Sie einen signierten PDF-Bericht für den gewählten Monat herunter.</p>
+        <div class="field">
+          <label data-i18n="labelMonth">Monat</label>
+          <select class="light-input" id="export-month-select"></select>
+        </div>
+      </div>
+      <div class="export-card">
+        <h3 data-i18n="sigTitle">Unterschrift</h3>
+        <p data-i18n="sigDesc">Zeichnen Sie Ihre Unterschrift. Sie erscheint auf dem PDF.</p>
+        <div class="sig-wrap" id="sig-wrap">
+          <canvas id="signature-canvas"></canvas>
+        </div>
+        <div class="sig-actions">
+          <div>
+            <span class="sig-status empty" id="sig-status" data-i18n="sigEmpty">Noch keine Unterschrift</span>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="btn-clear-sig" data-i18n="btnClearSig">Löschen</button>
+        </div>
+        <button class="btn btn-primary" id="btn-export-pdf" data-i18n="btnExport">↓ PDF herunterladen</button>
+      </div>
+    </div>
+
+    <!-- ADMIN -->
+    <div class="page" id="page-admin">
+      <div class="admin-header">
+        <h2 data-i18n="adminBadge">Administrator</h2>
+        <h1 data-i18n="adminTitle">Benutzerverwaltung</h1>
+      </div>
+      <div class="section-header">
+        <h2 data-i18n="allUsers">Alle Benutzer</h2>
+        <button class="btn btn-ghost btn-sm" id="btn-open-add-user" data-i18n="btnNewUser">+ Neuer Benutzer</button>
+      </div>
+      <div id="user-list"></div>
+    </div>
+
+  </div><!-- /page-content -->
+
+  <nav class="tabbar" id="tabbar">
+    <button class="tab-item active" data-tab="dashboard">
+      <span class="tab-icon">🗓</span>
+      <span data-i18n="tabHours">Stunden</span>
+    </button>
+    <button class="tab-item" data-tab="export">
+      <span class="tab-icon">📄</span>
+      <span data-i18n="tabExportShort">Export</span>
+    </button>
+    <button class="tab-item tab-admin" data-tab="admin" style="display:none;">
+      <span class="tab-icon">⚙️</span>
+      <span data-i18n="tabAdmin">Admin</span>
+    </button>
+  </nav>
+</div>
+
+<!-- ═══ MODAL: ENTRY ═══ -->
+<div class="modal-overlay" id="modal-entry">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-entry-title" data-i18n="modalAddEntry">Arbeitstag hinzufügen</div>
+    <div class="field">
+      <label data-i18n="labelDate">Datum</label>
+      <input type="date" id="entry-date" class="light-input">
+    </div>
+    <div class="field">
+      <label data-i18n="labelPlace">Arbeitsort</label>
+      <input type="text" id="entry-place" class="light-input" data-i18n-placeholder="placeholderPlace">
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+      <div class="field">
+        <label data-i18n="labelFrom">Von</label>
+        <input type="text" id="entry-from" class="light-input" placeholder="08:00">
+      </div>
+      <div class="field">
+        <label data-i18n="labelTo">Bis</label>
+        <input type="text" id="entry-to" class="light-input" placeholder="17:00">
+      </div>
+    </div>
+    <div class="field">
+      <label data-i18n="labelHours">Arbeitsstunden</label>
+      <input type="number" id="entry-hours" class="light-input" placeholder="8" min="0" max="24" step="0.5">
+    </div>
+    <div class="field">
+      <label data-i18n="labelNotes">Notizen (optional)</label>
+      <textarea id="entry-notes" class="light-input" data-i18n-placeholder="placeholderNotes"></textarea>
+    </div>
+    <div class="error-msg" id="entry-error"></div>
+    <div style="display:flex; gap:10px; margin-top:8px;">
+      <button class="btn btn-ghost" id="btn-cancel-entry" style="flex:1;" data-i18n="btnCancel">Abbrechen</button>
+      <button class="btn btn-primary" id="btn-save-entry" style="flex:2;" data-i18n="btnSave">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: USER ═══ -->
+<div class="modal-overlay" id="modal-user">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" data-i18n="modalNewUser">Neuen Benutzer anlegen</div>
+    <div class="field">
+      <label data-i18n="labelFullname">Vollständiger Name</label>
+      <input type="text" id="user-fullname" class="light-input" data-i18n-placeholder="placeholderFullname">
+    </div>
+    <div class="field">
+      <label data-i18n="labelUsername">Benutzername</label>
+      <input type="text" id="user-username" class="light-input" autocapitalize="none" data-i18n-placeholder="placeholderUsernameNew">
+    </div>
+    <div class="field">
+      <label data-i18n="labelPassword">Passwort</label>
+      <input type="password" id="user-password" class="light-input" data-i18n-placeholder="placeholderPasswordNew">
+    </div>
+    <div class="field">
+      <label data-i18n="labelRole">Rolle</label>
+      <select id="user-role" class="light-input">
+        <option value="employee" data-i18n="roleEmployee">Mitarbeiter</option>
+        <option value="admin" data-i18n="roleAdmin">Administrator</option>
+      </select>
+    </div>
+    <div class="error-msg" id="user-error"></div>
+    <div style="display:flex; gap:10px; margin-top:8px;">
+      <button class="btn btn-ghost" id="btn-cancel-user" style="flex:1;" data-i18n="btnCancel">Abbrechen</button>
+      <button class="btn btn-primary" id="btn-save-user" style="flex:2;" data-i18n="btnCreateUser">Benutzer erstellen</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  TRANSLATIONS
+// ═══════════════════════════════════════════════
+const TRANSLATIONS = {
+  de: {
+    appSubtitle:'Arbeitszeiterfassung', loginTitle:'Willkommen', loginSub:'Bitte melden Sie sich an',
+    labelUsername:'Benutzername', labelPassword:'Passwort', btnLogin:'Anmelden',
+    loginError:'Benutzername oder Passwort falsch.',
+    placeholderUsername:'Benutzername eingeben', placeholderPassword:'Passwort eingeben',
+    statHours:'Stunden gesamt', statDays:'Tage erfasst',
+    sectionEntries:'Einträge dieses Monats', btnAddDay:'+ Tag hinzufügen',
+    tabHours:'Stunden', tabExportShort:'Export', tabAdmin:'Admin',
+    tabExport:'PDF-Export', exportTitle:'Monatsbericht',
+    exportDesc:'Erstellen und laden Sie einen signierten PDF-Bericht für den gewählten Monat herunter.',
+    labelMonth:'Monat auswählen',
+    sigTitle:'Unterschrift', sigDesc:'Zeichnen Sie Ihre Unterschrift. Sie erscheint auf dem PDF.',
+    sigEmpty:'Noch keine Unterschrift', sigSigned:'✓ Unterschrift vorhanden',
+    btnClearSig:'Löschen', btnExport:'↓ PDF herunterladen',
+    adminBadge:'Administrator', adminTitle:'Benutzerverwaltung',
+    allUsers:'Alle Benutzer', btnNewUser:'+ Neuer Benutzer',
+    modalAddEntry:'Arbeitstag hinzufügen', modalEditEntry:'Eintrag bearbeiten',
+    labelDate:'Datum', labelPlace:'Arbeitsort', labelFrom:'Von', labelTo:'Bis',
+    labelHours:'Arbeitsstunden', labelNotes:'Notizen (optional)',
+    placeholderPlace:'z.B. Hauptbüro, Baustelle A …', placeholderNotes:'Zusätzliche Anmerkungen …',
+    btnCancel:'Abbrechen', btnSave:'Speichern',
+    modalNewUser:'Neuen Benutzer anlegen',
+    labelFullname:'Vollständiger Name', labelRole:'Rolle',
+    placeholderFullname:'z.B. Max Mustermann', placeholderUsernameNew:'benutzername',
+    placeholderPasswordNew:'Passwort festlegen',
+    roleEmployee:'Mitarbeiter', roleAdmin:'Administrator',
+    btnCreateUser:'Benutzer erstellen',
+    navRoleAdmin:'Administrator', navRoleEmployee:'Mitarbeiter',
+    toastEntrySaved:'Eintrag gespeichert', toastEntryUpdated:'Eintrag aktualisiert',
+    toastEntryDeleted:'Eintrag gelöscht', toastPdfDownloaded:'PDF heruntergeladen!',
+    toastUserCreated:'Benutzer erstellt', toastUserRemoved:'Benutzer entfernt',
+    toastSelectMonth:'Bitte einen Monat auswählen',
+    toastNoEntries:'Keine Einträge für diesen Monat', toastNeedSig:'Bitte zuerst unterschreiben',
+    confirmDeleteEntry:'Diesen Eintrag löschen?',
+    confirmDeleteUser:'Benutzer entfernen? Alle Einträge werden gelöscht.',
+    errFieldsRequired:'Datum, Ort und Stunden sind Pflichtfelder.',
+    errHoursRange:'Stunden müssen zwischen 0 und 24 liegen.',
+    errAllRequired:'Alle Felder sind Pflichtfelder.',
+    errPwdLength:'Passwort muss mindestens 6 Zeichen haben.',
+    errUsernameExists:'Benutzername bereits vergeben.',
+    emptyTitle:'Noch keine Einträge', emptyDesc:'Tippen Sie auf „+ Tag hinzufügen", um den ersten Arbeitstag zu erfassen.',
+    you:'Sie', pdfTableNum:'#', pdfTableDate:'Datum', pdfTablePlace:'Arbeitsort',
+    pdfTableTime:'Zeitraum', pdfTableHours:'Stunden', pdfTableNotes:'Notizen',
+    pdfTotalLabel:'GESAMTSTUNDEN', pdfDaysLogged:'Tage erfasst',
+    pdfEmpName:'MITARBEITER', pdfEmpId:'ID', pdfPeriod:'ZEITRAUM', pdfGenerated:'ERSTELLT AM',
+    pdfSigLabel:'Unterschrift des Mitarbeiters', pdfSigDate:'Unterzeichnet am',
+    pdfOfficeLabel:'FÜR DEN DIENSTGEBRAUCH', pdfOfficeStamp:'Stempel / Unterschrift Vorgesetzter',
+    pdfFooterText:'Arbeitszeiterfassung · Vertraulich', pdfMonthlyReport:'MONATSBERICHT',
+    MONTHS:['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'],
+    MONTHS_SHORT:['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'],
+  },
+  en: {
+    appSubtitle:'Work Hours Tracker', loginTitle:'Welcome back', loginSub:'Sign in to your account',
+    labelUsername:'Username', labelPassword:'Password', btnLogin:'Sign In',
+    loginError:'Incorrect username or password.',
+    placeholderUsername:'Enter username', placeholderPassword:'Enter password',
+    statHours:'Total Hours', statDays:'Days Logged',
+    sectionEntries:"This Month's Entries", btnAddDay:'+ Add Day',
+    tabHours:'Hours', tabExportShort:'Export', tabAdmin:'Admin',
+    tabExport:'PDF Export', exportTitle:'Monthly Report',
+    exportDesc:'Generate and download a signed PDF report for the selected month.',
+    labelMonth:'Select Month',
+    sigTitle:'Signature', sigDesc:'Draw your signature below. It will appear on the PDF.',
+    sigEmpty:'No signature yet', sigSigned:'✓ Signature ready',
+    btnClearSig:'Clear', btnExport:'↓ Download PDF',
+    adminBadge:'Administrator', adminTitle:'User Management',
+    allUsers:'All Users', btnNewUser:'+ New User',
+    modalAddEntry:'Add Work Day', modalEditEntry:'Edit Entry',
+    labelDate:'Date', labelPlace:'Work Location', labelFrom:'From', labelTo:'To',
+    labelHours:'Hours Worked', labelNotes:'Notes (optional)',
+    placeholderPlace:'e.g. Main Office, Site A …', placeholderNotes:'Any additional notes …',
+    btnCancel:'Cancel', btnSave:'Save',
+    modalNewUser:'Create New User',
+    labelFullname:'Full Name', labelRole:'Role',
+    placeholderFullname:'e.g. John Smith', placeholderUsernameNew:'username',
+    placeholderPasswordNew:'Set a password',
+    roleEmployee:'Employee', roleAdmin:'Admin',
+    btnCreateUser:'Create User',
+    navRoleAdmin:'Administrator', navRoleEmployee:'Employee',
+    toastEntrySaved:'Entry saved', toastEntryUpdated:'Entry updated',
+    toastEntryDeleted:'Entry deleted', toastPdfDownloaded:'PDF downloaded!',
+    toastUserCreated:'User created', toastUserRemoved:'User removed',
+    toastSelectMonth:'Please select a month',
+    toastNoEntries:'No entries for this month', toastNeedSig:'Please add your signature first',
+    confirmDeleteEntry:'Delete this entry?',
+    confirmDeleteUser:"Remove this user? Their entries will also be deleted.",
+    errFieldsRequired:'Date, location and hours are required.',
+    errHoursRange:'Hours must be between 0 and 24.',
+    errAllRequired:'All fields are required.',
+    errPwdLength:'Password must be at least 6 characters.',
+    errUsernameExists:'Username already exists.',
+    emptyTitle:'No entries yet', emptyDesc:'Tap "+ Add Day" to log your first work day.',
+    you:'You', pdfTableNum:'#', pdfTableDate:'Date', pdfTablePlace:'Location',
+    pdfTableTime:'Time Range', pdfTableHours:'Hours', pdfTableNotes:'Notes',
+    pdfTotalLabel:'TOTAL HOURS', pdfDaysLogged:'days logged',
+    pdfEmpName:'EMPLOYEE', pdfEmpId:'ID', pdfPeriod:'PERIOD', pdfGenerated:'GENERATED',
+    pdfSigLabel:'Employee Signature', pdfSigDate:'Signed on',
+    pdfOfficeLabel:'FOR OFFICE USE', pdfOfficeStamp:'Stamp / Supervisor Signature',
+    pdfFooterText:'Work Hours Tracker · Confidential', pdfMonthlyReport:'MONTHLY REPORT',
+    MONTHS:['January','February','March','April','May','June','July','August','September','October','November','December'],
+    MONTHS_SHORT:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+  }
+};
+
+let currentLang = localStorage.getItem('glfm_lang') || 'de';
+function t(key){ return (TRANSLATIONS[currentLang]||TRANSLATIONS['de'])[key] || key; }
+
+function applyTranslations() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    el.textContent = t(key);
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    el.placeholder = t(el.getAttribute('data-i18n-placeholder'));
+  });
+  // option elements
+  document.querySelectorAll('[data-i18n] option[data-i18n]').forEach(el => {
+    el.textContent = t(el.getAttribute('data-i18n'));
+  });
+  document.querySelectorAll('option[data-i18n]').forEach(el => {
+    el.textContent = t(el.getAttribute('data-i18n'));
+  });
+  // update sig status text if visible
+  const ss = document.getElementById('sig-status');
+  if(ss){ ss.textContent = sigHasContent() ? t('sigSigned') : t('sigEmpty'); }
+}
+
+function setLang(lang){
+  currentLang = lang;
+  localStorage.setItem('glfm_lang', lang);
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent===lang.toUpperCase()));
+  applyTranslations();
+  renderDashboard();
+}
+
+// ═══════════════════════════════════════════════
+//  DATA LAYER
+// ═══════════════════════════════════════════════
+const DB_USERS   = 'glfm_users';
+const DB_ENTRIES = 'glfm_entries';
+const DB_SESSION = 'glfm_session';
+
+function loadUsers(){ try{return JSON.parse(localStorage.getItem(DB_USERS))||[];}catch{return[];} }
+function saveUsers(u){ localStorage.setItem(DB_USERS, JSON.stringify(u)); }
+function loadEntries(){ try{return JSON.parse(localStorage.getItem(DB_ENTRIES))||[];}catch{return[];} }
+function saveEntries(e){ localStorage.setItem(DB_ENTRIES, JSON.stringify(e)); }
+function loadSession(){ try{return JSON.parse(sessionStorage.getItem(DB_SESSION))||null;}catch{return null;} }
+function saveSession(s){ sessionStorage.setItem(DB_SESSION, JSON.stringify(s)); }
+function clearSession(){ sessionStorage.removeItem(DB_SESSION); }
+
+function hashPwd(p){ return btoa(unescape(encodeURIComponent(p))); }
+
+// Seed admin
+(function(){
+  let users = loadUsers();
+  if(!users.find(u=>u.username==='admin')){
+    users.push({ id:'u_admin', username:'admin', password:hashPwd('Admin@GLFM2025'), fullname:'Administrator', role:'admin', created:new Date().toISOString() });
+    saveUsers(users);
+  }
+})();
+
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+let currentUser  = null;
+let currentDate  = new Date();
+let editingEntry = null;
+
+function uid(){ return 'e_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function initials(n){ return n.trim().split(' ').map(w=>w[0]?.toUpperCase()||'').slice(0,2).join(''); }
+function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function monthKey(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
+function fmtHrs(h){ const n=parseFloat(h)||0; return n%1===0?String(n):n.toFixed(1); }
+
+function toast(msg, type=''){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show ' + (type==='ok'?'ok':type==='err'?'err':'');
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>el.classList.remove('show'), 3000);
+}
+
+// ═══════════════════════════════════════════════
+//  LOGIN / LOGOUT
+// ═══════════════════════════════════════════════
+document.getElementById('btn-login').addEventListener('click', doLogin);
+document.getElementById('login-password').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+
+function doLogin(){
+  const un = document.getElementById('login-username').value.trim().toLowerCase();
+  const pw = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  errEl.classList.remove('show');
+  if(!un||!pw){ errEl.textContent=t('loginError'); errEl.classList.add('show'); return; }
+  const user = loadUsers().find(u=>u.username.toLowerCase()===un && u.password===hashPwd(pw));
+  if(!user){ errEl.textContent=t('loginError'); errEl.classList.add('show'); document.getElementById('login-password').value=''; return; }
+  currentUser = user;
+  saveSession(user);
+  showApp();
+}
+
+document.getElementById('btn-logout').addEventListener('click', ()=>{
+  clearSession(); currentUser=null;
+  document.getElementById('screen-login').style.display='flex';
+  document.getElementById('screen-app').style.display='none';
+  document.getElementById('screen-app').classList.remove('active');
+  document.getElementById('login-username').value='';
+  document.getElementById('login-password').value='';
+  document.getElementById('login-error').classList.remove('show');
+  // reset to dashboard tab
+  document.querySelectorAll('.tab-item').forEach(b=>b.classList.remove('active'));
+  document.querySelector('[data-tab="dashboard"]').classList.add('active');
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-dashboard').classList.add('active');
+});
+
+function showApp(){
+  document.getElementById('screen-login').style.display='none';
+  document.getElementById('screen-app').style.display='flex';
+  document.getElementById('screen-app').classList.add('active');
+  document.getElementById('nav-greeting').textContent = currentUser.fullname.split(' ')[0];
+  document.getElementById('nav-role').textContent = currentUser.role==='admin' ? t('navRoleAdmin') : t('navRoleEmployee');
+  document.getElementById('nav-avatar').textContent = initials(currentUser.fullname);
+  const adminTab = document.querySelector('.tab-admin');
+  adminTab.style.display = currentUser.role==='admin' ? '' : 'none';
+  renderDashboard();
+  renderExportPage();
+  initSignaturePad();
+  applyTranslations();
+}
+
+// Auto-login
+window.addEventListener('DOMContentLoaded', ()=>{
+  applyTranslations();
+  const s = loadSession();
+  if(s){ const u=loadUsers().find(x=>x.id===s.id); if(u){currentUser=u; showApp(); return;} }
+});
+
+// ═══════════════════════════════════════════════
+//  TABS
+// ═══════════════════════════════════════════════
+document.querySelectorAll('.tab-item').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-item').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const tab=btn.dataset.tab;
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById('page-'+tab).classList.add('active');
+    if(tab==='export'){ renderExportPage(); resizeSigCanvas(); }
+    if(tab==='admin' && currentUser?.role==='admin') renderAdminPage();
+  });
+});
+
+// ═══════════════════════════════════════════════
+//  MONTH NAVIGATION
+// ═══════════════════════════════════════════════
+document.getElementById('btn-prev-month').addEventListener('click',()=>{
+  currentDate=new Date(currentDate.getFullYear(),currentDate.getMonth()-1,1); renderDashboard();
+});
+document.getElementById('btn-next-month').addEventListener('click',()=>{
+  currentDate=new Date(currentDate.getFullYear(),currentDate.getMonth()+1,1); renderDashboard();
+});
+
+// ═══════════════════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════════════════
+function getMyEntries(){ return loadEntries().filter(e=>e.userId===currentUser?.id); }
+
+function renderDashboard(){
+  if(!currentUser) return;
+  const months = t('MONTHS');
+  const monthsS = t('MONTHS_SHORT');
+  const mn = currentDate.getMonth();
+  const yr = currentDate.getFullYear();
+  document.getElementById('current-month-name').textContent = months[mn];
+  document.getElementById('current-month-year').textContent = yr;
+
+  const key = monthKey(currentDate);
+  const entries = getMyEntries().filter(e=>e.monthKey===key).sort((a,b)=>a.date.localeCompare(b.date));
+  const totalHrs = entries.reduce((s,e)=>s+(parseFloat(e.hours)||0),0);
+
+  document.getElementById('stat-total-hours').textContent = fmtHrs(totalHrs);
+  document.getElementById('stat-entries').textContent = entries.length;
+
+  const list = document.getElementById('entry-list');
+  if(!entries.length){
+    list.innerHTML=`<div class="empty-state fade-in"><div class="empty-icon">📋</div><h3>${t('emptyTitle')}</h3><p>${t('emptyDesc')}</p></div>`;
+    return;
+  }
+  list.innerHTML = entries.map(e=>{
+    const d = new Date(e.date+'T12:00:00');
+    return `<div class="entry-card fade-in">
+      <div class="entry-date-badge">
+        <div class="day">${d.getDate()}</div>
+        <div class="mon">${monthsS[d.getMonth()]}</div>
+      </div>
+      <div class="entry-info">
+        <div class="entry-place">${escHtml(e.place)}</div>
+        <div class="entry-range">${escHtml(e.from||'')}${e.from&&e.to?' – ':''}${escHtml(e.to||'')}</div>
+        <div class="entry-hours">${fmtHrs(e.hours)} h</div>
+        ${e.notes?`<div style="font-size:0.72rem;color:var(--mid);margin-top:4px;">${escHtml(e.notes)}</div>`:''}
+      </div>
+      <div class="entry-actions">
+        <button class="entry-act-btn" onclick="openEditEntry('${e.id}')">✏️</button>
+        <button class="entry-act-btn del" onclick="deleteEntry('${e.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════
+//  ENTRY MODAL
+// ═══════════════════════════════════════════════
+document.getElementById('btn-open-add').addEventListener('click', ()=>openAddEntry());
+document.getElementById('btn-cancel-entry').addEventListener('click', ()=>closeModal('modal-entry'));
+document.getElementById('btn-save-entry').addEventListener('click', saveEntry);
+document.getElementById('modal-entry').addEventListener('click', function(e){ if(e.target===this) closeModal('modal-entry'); });
+
+function openAddEntry(){
+  editingEntry=null;
+  document.getElementById('modal-entry-title').textContent = t('modalAddEntry');
+  document.getElementById('entry-date').value = new Date().toISOString().split('T')[0];
+  ['entry-place','entry-from','entry-to','entry-hours','entry-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('entry-error').classList.remove('show');
+  openModal('modal-entry');
+}
+
+function openEditEntry(id){
+  const entry = loadEntries().find(e=>e.id===id);
+  if(!entry) return;
+  editingEntry = entry;
+  document.getElementById('modal-entry-title').textContent = t('modalEditEntry');
+  document.getElementById('entry-date').value  = entry.date;
+  document.getElementById('entry-place').value = entry.place;
+  document.getElementById('entry-from').value  = entry.from||'';
+  document.getElementById('entry-to').value    = entry.to||'';
+  document.getElementById('entry-hours').value = entry.hours;
+  document.getElementById('entry-notes').value = entry.notes||'';
+  document.getElementById('entry-error').classList.remove('show');
+  openModal('modal-entry');
+}
+
+function saveEntry(){
+  const date  = document.getElementById('entry-date').value;
+  const place = document.getElementById('entry-place').value.trim();
+  const from  = document.getElementById('entry-from').value.trim();
+  const to    = document.getElementById('entry-to').value.trim();
+  const hours = document.getElementById('entry-hours').value;
+  const notes = document.getElementById('entry-notes').value.trim();
+  const errEl = document.getElementById('entry-error');
+  if(!date||!place||!hours){ errEl.textContent=t('errFieldsRequired'); errEl.classList.add('show'); return; }
+  if(parseFloat(hours)<=0||parseFloat(hours)>24){ errEl.textContent=t('errHoursRange'); errEl.classList.add('show'); return; }
+  errEl.classList.remove('show');
+  const d = new Date(date+'T12:00:00');
+  const mKey = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  const all = loadEntries();
+  if(editingEntry){
+    const idx = all.findIndex(e=>e.id===editingEntry.id);
+    if(idx>-1) all[idx]={...all[idx], date, place, from, to, hours:parseFloat(hours), notes, monthKey:mKey};
+    toast(t('toastEntryUpdated'),'ok');
+  } else {
+    all.push({ id:uid(), userId:currentUser.id, date, place, from, to, hours:parseFloat(hours), notes, monthKey:mKey, created:new Date().toISOString() });
+    toast(t('toastEntrySaved'),'ok');
+  }
+  saveEntries(all);
+  closeModal('modal-entry');
+  renderDashboard();
+}
+
+function deleteEntry(id){
+  if(!confirm(t('confirmDeleteEntry'))) return;
+  saveEntries(loadEntries().filter(e=>e.id!==id));
+  toast(t('toastEntryDeleted'));
+  renderDashboard();
+}
+
+// ═══════════════════════════════════════════════
+//  MODAL HELPERS
+// ═══════════════════════════════════════════════
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+document.getElementById('modal-user').addEventListener('click',function(e){ if(e.target===this) closeModal('modal-user'); });
+
+// ═══════════════════════════════════════════════
+//  EXPORT PAGE
+// ═══════════════════════════════════════════════
+function renderExportPage(){
+  if(!currentUser) return;
+  const months = t('MONTHS');
+  const all    = getMyEntries();
+  const keys   = [...new Set([monthKey(currentDate), ...all.map(e=>e.monthKey)])].sort().reverse();
+  const sel    = document.getElementById('export-month-select');
+  sel.innerHTML = keys.map(k=>{
+    const [y,m]=k.split('-');
+    return `<option value="${k}">${months[parseInt(m)-1]} ${y}</option>`;
+  }).join('');
+  sel.value = monthKey(currentDate);
+  updateSigStatus();
+}
+
+// ═══════════════════════════════════════════════
+//  SIGNATURE PAD  (fully rebuilt – pixel-safe)
+// ═══════════════════════════════════════════════
+let sigDrawing = false;
+let sigLastPos = {x:0,y:0};
+let sigCanvasReady = false;
+
+function initSignaturePad(){
+  // Run after the export tab becomes visible so offsetWidth > 0
+  const wrap   = document.getElementById('sig-wrap');
+  const canvas = document.getElementById('signature-canvas');
+  if(!wrap || !canvas) return;
+
+  // Size canvas to wrapper – must happen once wrapper is visible
+  function doResize(){
+    const w = wrap.offsetWidth || 340;
+    // Save existing drawing
+    let saved = null;
+    if(canvas.width > 0 && canvas.height > 0){
+      saved = canvas.toDataURL();
+    }
+    canvas.width  = w;
+    canvas.height = 160;
+    // Restore drawing
+    if(saved){
+      const img = new Image();
+      img.onload = ()=> canvas.getContext('2d').drawImage(img,0,0);
+      img.src = saved;
+    }
+    sigCanvasReady = true;
+    updateSigStatus();
+  }
+
+  // Try immediately, then again on resize
+  setTimeout(doResize, 50);
+  window.addEventListener('resize', doResize);
+
+  canvas.addEventListener('mousedown',  onSigStart);
+  canvas.addEventListener('mousemove',  onSigMove);
+  canvas.addEventListener('mouseup',    onSigEnd);
+  canvas.addEventListener('mouseleave', onSigEnd);
+  canvas.addEventListener('touchstart', onSigStart, {passive:false});
+  canvas.addEventListener('touchmove',  onSigMove,  {passive:false});
+  canvas.addEventListener('touchend',   onSigEnd,   {passive:false});
+
+  document.getElementById('btn-clear-sig').addEventListener('click', clearSig);
+}
+
+function resizeSigCanvas(){
+  // Called when switching to export tab
+  const wrap   = document.getElementById('sig-wrap');
+  const canvas = document.getElementById('signature-canvas');
+  if(!wrap || !canvas) return;
+  const w = wrap.offsetWidth;
+  if(!w) return;
+  let saved = null;
+  try{ if(canvas.width>0) saved = canvas.toDataURL(); } catch(e){}
+  canvas.width  = w;
+  canvas.height = 160;
+  if(saved){
+    const img = new Image();
+    img.onload = ()=> canvas.getContext('2d').drawImage(img,0,0);
+    img.src = saved;
+  }
+  sigCanvasReady = true;
+  updateSigStatus();
+}
+
+function getCanvasPos(e, canvas){
+  const r = canvas.getBoundingClientRect();
+  const scaleX = canvas.width  / r.width;
+  const scaleY = canvas.height / r.height;
+  const src = e.touches ? e.touches[0] : e;
+  return { x:(src.clientX - r.left)*scaleX, y:(src.clientY - r.top)*scaleY };
+}
+
+function onSigStart(e){
+  e.preventDefault();
+  sigDrawing = true;
+  const canvas = document.getElementById('signature-canvas');
+  sigLastPos = getCanvasPos(e, canvas);
+  // Draw a dot on tap/click
+  const ctx = canvas.getContext('2d');
+  ctx.beginPath();
+  ctx.arc(sigLastPos.x, sigLastPos.y, 1.2, 0, Math.PI*2);
+  ctx.fillStyle = '#0A0A0A';
+  ctx.fill();
+  updateSigStatus();
+}
+
+function onSigMove(e){
+  if(!sigDrawing) return;
+  e.preventDefault();
+  const canvas = document.getElementById('signature-canvas');
+  const pos    = getCanvasPos(e, canvas);
+  const ctx    = canvas.getContext('2d');
+  ctx.beginPath();
+  ctx.moveTo(sigLastPos.x, sigLastPos.y);
+  ctx.lineTo(pos.x, pos.y);
+  ctx.strokeStyle = '#0A0A0A';
+  ctx.lineWidth   = 2.2;
+  ctx.lineCap     = 'round';
+  ctx.lineJoin    = 'round';
+  ctx.stroke();
+  sigLastPos = pos;
+}
+
+function onSigEnd(e){ sigDrawing = false; updateSigStatus(); }
+
+function clearSig(){
+  const canvas = document.getElementById('signature-canvas');
+  canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
+  updateSigStatus();
+}
+
+function sigHasContent(){
+  try{
+    const canvas = document.getElementById('signature-canvas');
+    if(!canvas || canvas.width===0 || canvas.height===0) return false;
+    const data = canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;
+    // Check alpha channel – any non-zero alpha means drawn content
+    for(let i=3; i<data.length; i+=4){ if(data[i]>10) return true; }
+    return false;
+  } catch(e){ return false; }
+}
+
+function updateSigStatus(){
+  const el = document.getElementById('sig-status');
+  if(!el) return;
+  const has = sigHasContent();
+  el.textContent = has ? t('sigSigned') : t('sigEmpty');
+  el.className   = 'sig-status ' + (has ? 'signed' : 'empty');
+}
+
+// ═══════════════════════════════════════════════
+//  PDF EXPORT  (fully rebuilt)
+// ═══════════════════════════════════════════════
+document.getElementById('btn-export-pdf').addEventListener('click', exportPDF);
+
+function exportPDF(){
+  const selMonth = document.getElementById('export-month-select').value;
+  if(!selMonth){ toast(t('toastSelectMonth'),'err'); return; }
+  const [yr,mn] = selMonth.split('-').map(Number);
+  const monthName = t('MONTHS')[mn-1];
+
+  const entries = getMyEntries()
+    .filter(e=>e.monthKey===selMonth)
+    .sort((a,b)=>a.date.localeCompare(b.date));
+
+  if(!entries.length){ toast(t('toastNoEntries'),'err'); return; }
+  if(!sigHasContent()){ toast(t('toastNeedSig'),'err'); return; }
+
+  // Get signature image BEFORE creating doc (avoids any async issues)
+  const canvas  = document.getElementById('signature-canvas');
+  let sigDataURL = null;
+  try{ sigDataURL = canvas.toDataURL('image/png'); } catch(e){ console.warn('sig err',e); }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+
+  const PW = 210, PH = 297, ML = 16, MR = 16;
+  const CW = PW - ML - MR;
+
+  // Colors as arrays [r,g,b]
+  const BLACK  = [10,10,10];
+  const GOLD   = [200,169,110];
+  const GOLD_D = [168,137,62];
+  const MID    = [130,130,130];
+  const LIGHT  = [240,239,235];
+  const WHITE  = [255,255,255];
+  const OFFWH  = [245,244,240];
+
+  // ── HEADER ──
+  doc.setFillColor(...BLACK);
+  doc.rect(0, 0, PW, 36, 'F');
+
+  // Logo circle
+  doc.setFillColor(...GOLD);
+  doc.circle(ML+11, 18, 11, 'F');
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(7.5);
+  doc.setTextColor(...BLACK);
+  doc.text('GLFM', ML+11, 20, {align:'center'});
+
+  // Company name + subtitle
+  doc.setTextColor(...WHITE);
+  doc.setFontSize(15); doc.setFont('helvetica','bold');
+  doc.text('GLFM', ML+28, 15);
+  doc.setFontSize(7.5); doc.setFont('helvetica','normal');
+  doc.setTextColor(...GOLD);
+  doc.text(t('appSubtitle').toUpperCase(), ML+28, 21);
+
+  // Report label + month
+  doc.setTextColor(...WHITE);
+  doc.setFontSize(11); doc.setFont('helvetica','bold');
+  doc.text(`${monthName} ${yr}`, PW-MR, 15, {align:'right'});
+  doc.setFontSize(7); doc.setFont('helvetica','normal');
+  doc.setTextColor(...GOLD);
+  doc.text(t('pdfMonthlyReport'), PW-MR, 21, {align:'right'});
+
+  // ── EMPLOYEE INFO BAND ──
+  let Y = 44;
+  doc.setFillColor(...OFFWH);
+  doc.roundedRect(ML, Y, CW, 26, 3, 3, 'F');
+
+  const colMid = ML + CW/2 + 6;
+  const labels = [t('pdfEmpName'), t('pdfPeriod'), t('pdfEmpId'), t('pdfGenerated')];
+  const vals   = [
+    currentUser.fullname,
+    `${monthName} ${yr}`,
+    currentUser.id,
+    new Date().toLocaleDateString(currentLang==='de'?'de-DE':'en-GB',{day:'2-digit',month:'long',year:'numeric'})
+  ];
+
+  // Left column: Name + Period
+  doc.setFontSize(6.5); doc.setFont('helvetica','normal'); doc.setTextColor(...MID);
+  doc.text(labels[0], ML+6, Y+7);
+  doc.text(labels[1], ML+6, Y+18);
+  doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.setTextColor(...BLACK);
+  doc.text(vals[0],   ML+6, Y+12);
+  doc.setFontSize(8.5); doc.setFont('helvetica','normal');
+  doc.text(vals[1],   ML+6, Y+23);
+
+  // Right column: ID + Generated
+  doc.setFontSize(6.5); doc.setFont('helvetica','normal'); doc.setTextColor(...MID);
+  doc.text(labels[2], colMid, Y+7);
+  doc.text(labels[3], colMid, Y+18);
+  doc.setFontSize(8.5); doc.setFont('helvetica','normal'); doc.setTextColor(...BLACK);
+  doc.text(vals[2], colMid, Y+12);
+  doc.text(vals[3], colMid, Y+23);
+
+  Y += 32;
+
+  // ── TABLE ──
+  const tableHead = [[
+    t('pdfTableNum'), t('pdfTableDate'), t('pdfTablePlace'),
+    t('pdfTableTime'), t('pdfTableHours'), t('pdfTableNotes')
+  ]];
+
+  const tableBody = entries.map((e,i)=>{
+    const d = new Date(e.date+'T12:00:00');
+    const dateStr = d.toLocaleDateString(currentLang==='de'?'de-DE':'en-GB',{day:'2-digit',month:'2-digit',year:'numeric'});
+    return [
+      String(i+1),
+      dateStr,
+      e.place,
+      e.from&&e.to ? `${e.from} – ${e.to}` : (e.from||e.to||'—'),
+      `${fmtHrs(e.hours)} h`,
+      e.notes||'—'
+    ];
+  });
+
+  doc.autoTable({
+    startY: Y,
+    head: tableHead,
+    body: tableBody,
+    margin: { left:ML, right:MR },
+    tableWidth: CW,
+    styles: {
+      font:'helvetica', fontSize:8.5,
+      cellPadding:{top:5, bottom:5, left:5, right:4},
+      textColor:BLACK, lineColor:[220,219,215], lineWidth:0.25
+    },
+    headStyles: {
+      fillColor:BLACK, textColor:GOLD, fontStyle:'bold', fontSize:7.5,
+      cellPadding:{top:6, bottom:6, left:5, right:4}
+    },
+    alternateRowStyles:{ fillColor:[248,248,246] },
+    columnStyles:{
+      0:{ cellWidth:9,  halign:'center', textColor:MID },
+      1:{ cellWidth:28 },
+      2:{ cellWidth:44 },
+      3:{ cellWidth:32 },
+      4:{ cellWidth:20, halign:'center', fontStyle:'bold', textColor:GOLD_D },
+      5:{ cellWidth:'auto', textColor:MID, fontSize:7.5 }
+    },
+    didParseCell(data){
+      if(data.section==='head'){
+        data.cell.styles.halign = (data.column.index===0||data.column.index===4) ? 'center' : 'left';
+      }
+    }
+  });
+
+  let FY = doc.lastAutoTable.finalY + 8;
+
+  // ── SUMMARY BAR ──
+  const totalHrs = entries.reduce((s,e)=>s+(parseFloat(e.hours)||0),0);
+  const barH = 26;
+  doc.setFillColor(...BLACK);
+  doc.roundedRect(ML, FY, CW, barH, 3, 3, 'F');
+
+  doc.setTextColor(...GOLD);
+  doc.setFontSize(7); doc.setFont('helvetica','bold');
+  doc.text(t('pdfTotalLabel'), ML+10, FY+9);
+  doc.setFontSize(18); doc.setFont('helvetica','bold');
+  doc.text(fmtHrs(totalHrs), ML+10, FY+21);
+
+  doc.setTextColor(...MID);
+  doc.setFontSize(8); doc.setFont('helvetica','normal');
+  doc.text(`${entries.length} ${t('pdfDaysLogged')}`, ML+42, FY+21);
+
+  doc.setTextColor(...WHITE);
+  doc.setFontSize(8); doc.setFont('helvetica','normal');
+  doc.text(`${monthName} ${yr}  ·  ${currentUser.fullname}`, PW-MR, FY+16, {align:'right'});
+
+  FY += barH + 14;
+
+  // ── SIGNATURE + OFFICE BOX ──
+  // New page if not enough space
+  if(FY + 55 > PH - 16){ doc.addPage(); FY = 20; }
+
+  const sigBoxW  = 88;
+  const sigBoxH  = 44;
+  const offBoxW  = 58;
+  const offBoxH  = 44;
+
+  // Signature area
+  doc.setDrawColor(...LIGHT);
+  doc.setLineWidth(0.35);
+  doc.roundedRect(ML, FY, sigBoxW, sigBoxH, 2, 2, 'S');
+
+  // Embed signature image
+  if(sigDataURL){
+    try{
+      // Place image inside the box with padding
+      doc.addImage(sigDataURL, 'PNG', ML+2, FY+2, sigBoxW-4, sigBoxH-16);
+    } catch(imgErr){ console.warn('PDF addImage error:', imgErr); }
+  }
+
+  // Signature label line
+  doc.setDrawColor(...LIGHT);
+  doc.line(ML+4, FY+sigBoxH-12, ML+sigBoxW-4, FY+sigBoxH-12);
+  doc.setTextColor(...MID);
+  doc.setFontSize(7); doc.setFont('helvetica','normal');
+  doc.text(t('pdfSigLabel'), ML+4, FY+sigBoxH-7);
+  doc.text(`${currentUser.fullname}`, ML+4, FY+sigBoxH-3);
+
+  // Date below sig box
+  doc.setFontSize(6.5); doc.setTextColor(...MID);
+  const today = new Date().toLocaleDateString(currentLang==='de'?'de-DE':'en-GB',{day:'2-digit',month:'long',year:'numeric'});
+  doc.text(`${t('pdfSigDate')}: ${today}`, ML, FY+sigBoxH+5);
+
+  // Office stamp box
+  const offX = PW - MR - offBoxW;
+  doc.setDrawColor(...LIGHT);
+  doc.setLineWidth(0.35);
+  doc.roundedRect(offX, FY, offBoxW, offBoxH, 2, 2, 'S');
+  doc.setTextColor(...MID);
+  doc.setFontSize(6.5); doc.setFont('helvetica','bold');
+  doc.text(t('pdfOfficeLabel'), offX + offBoxW/2, FY+9, {align:'center'});
+  doc.setFontSize(6.5); doc.setFont('helvetica','normal');
+  doc.text(t('pdfOfficeStamp'), offX + offBoxW/2, FY+sigBoxH-6, {align:'center'});
+
+  // ── FOOTER ──
+  const footY = PH - 10;
+  doc.setFillColor(...BLACK);
+  doc.rect(0, footY-5, PW, 18, 'F');
+  doc.setFontSize(7.5); doc.setFont('helvetica','bold'); doc.setTextColor(...GOLD);
+  doc.text('GLFM', ML, footY+2);
+  doc.setFont('helvetica','normal'); doc.setTextColor(...MID);
+  doc.text(t('pdfFooterText'), PW/2, footY+2, {align:'center'});
+  doc.text(new Date().toISOString().split('T')[0], PW-MR, footY+2, {align:'right'});
+
+  // ── SAVE ──
+  const fn = `GLFM_${currentUser.fullname.replace(/\s+/g,'_')}_${monthName}_${yr}.pdf`;
+  doc.save(fn);
+  toast(t('toastPdfDownloaded'),'ok');
+}
+
+// ═══════════════════════════════════════════════
+//  ADMIN PAGE
+// ═══════════════════════════════════════════════
+function renderAdminPage(){
+  const users = loadUsers();
+  document.getElementById('user-list').innerHTML = users.map(u=>`
+    <div class="user-row fade-in">
+      <div class="user-av">${initials(u.fullname)}</div>
+      <div class="user-info">
+        <div class="user-name">${escHtml(u.fullname)}</div>
+        <div class="user-role-txt">@${escHtml(u.username)}
+          <span class="badge ${u.role==='admin'?'badge-gold':'badge-gray'}" style="margin-left:4px;">
+            ${u.role==='admin'?t('roleAdmin'):t('roleEmployee')}
+          </span>
+        </div>
+      </div>
+      <div>
+        ${u.id!==currentUser.id
+          ? `<button class="btn btn-danger" onclick="deleteUser('${u.id}')" data-i18n="btnRemove">Entfernen</button>`
+          : `<span style="font-size:0.72rem;color:var(--mid);">${t('you')}</span>`
+        }
+      </div>
+    </div>`).join('');
+}
+
+document.getElementById('btn-open-add-user').addEventListener('click',()=>{
+  ['user-fullname','user-username','user-password'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('user-role').value='employee';
+  document.getElementById('user-error').classList.remove('show');
+  openModal('modal-user');
+});
+document.getElementById('btn-cancel-user').addEventListener('click',()=>closeModal('modal-user'));
+document.getElementById('btn-save-user').addEventListener('click', createUser);
+
+function createUser(){
+  const fullname = document.getElementById('user-fullname').value.trim();
+  const username = document.getElementById('user-username').value.trim().toLowerCase();
+  const password = document.getElementById('user-password').value;
+  const role     = document.getElementById('user-role').value;
+  const errEl    = document.getElementById('user-error');
+  if(!fullname||!username||!password){ errEl.textContent=t('errAllRequired'); errEl.classList.add('show'); return; }
+  if(password.length<6){ errEl.textContent=t('errPwdLength'); errEl.classList.add('show'); return; }
+  const users = loadUsers();
+  if(users.find(u=>u.username===username)){ errEl.textContent=t('errUsernameExists'); errEl.classList.add('show'); return; }
+  users.push({ id:'u_'+Date.now().toString(36), username, password:hashPwd(password), fullname, role, created:new Date().toISOString() });
+  saveUsers(users);
+  errEl.classList.remove('show');
+  closeModal('modal-user');
+  renderAdminPage();
+  toast(`${t('toastUserCreated')}: @${username}`,'ok');
+}
+
+function deleteUser(id){
+  if(!confirm(t('confirmDeleteUser'))) return;
+  saveUsers(loadEntries(), loadUsers().filter(u=>u.id!==id));
+  saveEntries(loadEntries().filter(e=>e.userId!==id));
+  saveUsers(loadUsers().filter(u=>u.id!==id));
+  renderAdminPage();
+  toast(t('toastUserRemoved'));
+}
+</script>
+</body>
+</html>
