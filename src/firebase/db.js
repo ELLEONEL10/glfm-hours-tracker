@@ -14,6 +14,7 @@ import { db } from './config';
 
 const USERS = 'users';
 const ENTRIES = 'entries';
+const SHIFTS = 'shifts';
 
 function requireDb() {
   if (!db) throw new Error('Firebase not configured');
@@ -76,6 +77,33 @@ export const deleteEntryDoc = (id) => {
 export const onEntriesSnapshot = (cb) => {
   requireDb();
   return onSnapshot(collection(db, ENTRIES), (snap) => {
+    cb(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+  });
+};
+
+// --- Shifts ---
+
+export const createShift = (data) => {
+  requireDb();
+  return addDoc(collection(db, SHIFTS), {
+    ...data,
+    created: serverTimestamp(),
+  });
+};
+
+export const updateShift = (id, data) => {
+  requireDb();
+  return updateDoc(doc(db, SHIFTS, id), data);
+};
+
+export const deleteShiftDoc = (id) => {
+  requireDb();
+  return deleteDoc(doc(db, SHIFTS, id));
+};
+
+export const onShiftsSnapshot = (cb) => {
+  requireDb();
+  return onSnapshot(collection(db, SHIFTS), (snap) => {
     cb(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
   });
 };

@@ -215,3 +215,41 @@ html.dark .sig-wrap { background:#1A1A1A; }
 html.dark .stat-card.accent { background:var(--black); }
 html.dark .stat-card.accent .stat-val { color:var(--accent); }
 html.dark .admin-header { border:1px solid var(--line); }
+
+/* SHIFT CARDS */
+.shift-list { display:flex; flex-direction:column; gap:10px; }
+.shift-card { background:var(--white); border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px; display:flex; align-items:flex-start; gap:14px; }
+.shift-date-badge { min-width:44px; text-align:center; background:var(--off-white); border-radius:8px; padding:6px 0; }
+.shift-date-badge .day { font-size:1.2rem; font-weight:800; line-height:1; }
+.shift-date-badge .mon { font-size:0.6rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--mid); }
+.shift-info { flex:1; min-width:0; }
+.shift-place { font-weight:600; font-size:0.95rem; }
+.shift-range { font-size:0.75rem; color:var(--mid); margin-top:2px; }
+.shift-employees { font-size:0.75rem; color:var(--accent-dark); margin-top:4px; }
+.shift-joker-label { font-size:0.75rem; color:var(--accent); margin-top:2px; font-weight:600; }
+.shift-notes { font-size:0.72rem; color:var(--mid); margin-top:4px; font-style:italic; }
+.shift-actions { display:flex; flex-direction:column; gap:6px; }
+.shift-badge-label { display:inline-block; font-size:0.62rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--accent-dark); background:rgba(200,169,110,0.12); padding:2px 8px; border-radius:4px; margin-top:4px; }
+.shift-assign-list { max-height:200px; overflow-y:auto; border:1px solid var(--line); border-radius:8px; padding:4px; }
+.shift-assign-row { display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:6px; cursor:pointer; transition:background 0.15s; }
+.shift-assign-row:hover { background:var(--off-white); }
+.shift-assign-row input[type=checkbox] { width:16px; height:16px; accent-color:var(--accent); }
+.user-av-sm { width:28px; height:28px; border-radius:50%; background:var(--off-white); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:700; flex-shrink:0; }
+.shift-days-row { display:flex; flex-wrap:wrap; gap:4px; align-items:center; margin-top:4px; }
+.shift-days-label { font-size:0.68rem; color:var(--mid); margin-right:2px; }
+.shift-day-chip { display:inline-block; font-size:0.62rem; font-weight:700; padding:2px 7px; border-radius:4px; background:var(--off-white); color:var(--black); }
+.shift-day-group { background:var(--white); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; }
+.shift-day-header { display:flex; align-items:center; gap:8px; padding:10px 16px; background:var(--off-white); border-bottom:1px solid var(--line); }
+.shift-day-num { font-size:1rem; font-weight:800; }
+.shift-day-month { font-size:0.7rem; text-transform:uppercase; color:var(--mid); letter-spacing:0.04em; }
+.shift-day-year { font-size:0.65rem; color:var(--mid); }
+.shift-day-name { font-size:0.65rem; color:var(--mid); margin-left:auto; text-transform:uppercase; letter-spacing:0.04em; }
+.shift-instance { padding:10px 16px; border-top:1px solid var(--line); }
+.shift-instance:first-child { border-top:none; }
+.shift-instance-info { min-width:0; }
+
+/* DAY PICKER */
+.day-picker { display:flex; gap:6px; flex-wrap:wrap; }
+.day-chip { padding:8px 12px; border-radius:8px; border:1px solid var(--line); background:var(--white); color:var(--black); font-family:var(--font); font-size:0.8rem; font-weight:600; cursor:pointer; transition:all 0.15s; }
+.day-chip:hover { border-color:var(--accent); }
+.day-chip.active { background:var(--accent); border-color:var(--accent); color:var(--black); }

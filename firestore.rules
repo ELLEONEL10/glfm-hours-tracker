@@ -30,5 +30,15 @@ service cloud.firestore {
                    && (request.resource.data.userId == request.auth.uid
                        || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
     }
+
+    // Shifts collection
+    match /shifts/{shiftId} {
+      // Authenticated users can read all shifts
+      allow read: if request.auth != null;
+
+      // Only admins can create/update/delete shifts
+      allow write: if request.auth != null
+                   && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
   }
 }

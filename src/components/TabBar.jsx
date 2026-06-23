@@ -6,6 +6,7 @@ export default function TabBar({ activeTab, onTabChange, isAdmin }) {
   const tabs = [
     { key: 'dashboard', icon: '🗓', label: t('tabHours') },
     { key: 'export', icon: '📄', label: t('tabExportShort') },
+    { key: 'shifts', icon: '🔄', label: t('tabShifts') },
   ];
 
   if (isAdmin) {

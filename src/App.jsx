@@ -5,6 +5,7 @@ import { getUserDoc, createUserDoc } from './firebase/db';
 import { hasConfig } from './firebase/config';
 import { useUsers } from './hooks/useUsers';
 import { useEntries } from './hooks/useEntries';
+import { useShifts } from './hooks/useShifts';
 import { useToast } from './utils/useToast';
 import Login from './components/Login';
 import TopNav from './components/TopNav';
@@ -12,6 +13,8 @@ import TabBar from './components/TabBar';
 import Dashboard from './components/Dashboard';
 import ExportPage from './components/ExportPage';
 import AdminPage from './components/AdminPage';
+import ShiftPlanner from './components/ShiftPlanner';
+import ShiftView from './components/ShiftView';
 import EntryModal from './components/EntryModal';
 import Toast from './components/Toast';
 
@@ -48,6 +51,7 @@ function AppContent() {
 
   const { users, deleteUser } = useUsers();
   const { entries, saveEntry, deleteEntry } = useEntries();
+  const { shifts, saveShift, editShift, deleteShift } = useShifts();
 
   useEffect(() => {
     if (!hasConfig) {
@@ -190,6 +194,26 @@ function AppContent() {
             currentUser={currentUser}
             currentDate={currentDate}
             showToast={showToast}
+          />
+        )}
+        {activeTab === 'shifts' && currentUser.role === 'admin' && (
+          <ShiftPlanner
+            shifts={shifts}
+            users={users}
+            currentUser={currentUser}
+            onSaveShift={saveShift}
+            onEditShift={editShift}
+            onDeleteShift={deleteShift}
+            showToast={showToast}
+            monthsShort={t('MONTHS_SHORT')}
+          />
+        )}
+        {activeTab === 'shifts' && currentUser.role !== 'admin' && (
+          <ShiftView
+            shifts={shifts}
+            currentUser={currentUser}
+            users={users}
+            monthsShort={t('MONTHS_SHORT')}
           />
         )}
         {activeTab === 'admin' && currentUser.role === 'admin' && (
