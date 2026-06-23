@@ -138,23 +138,32 @@ export default function ShiftPlanner({ shifts, users, currentUser, onSaveShift, 
     setBusy(true);
     const data = { startDate, endDate, daysOfWeek, place, from, to: to || '', notes: notes || '', assignedEmployees, jokers };
 
-    if (editingShift) {
-      await onEditShift(editingShift.id, data);
-    } else {
-      data.createdBy = currentUser.uid;
-      await onSaveShift(data);
+    try {
+      if (editingShift) {
+        await onEditShift(editingShift.id, data);
+      } else {
+        data.createdBy = currentUser.uid;
+        await onSaveShift(data);
+      }
+      setShowModal(false);
+      setEditingShift(null);
+      showToast(t('toastShiftSaved'), 'ok');
+    } catch (err) {
+      console.error('Save failed:', err);
+      showToast(err.message || 'Fehler beim Speichern', 'err');
     }
-
     setBusy(false);
-    setShowModal(false);
-    setEditingShift(null);
-    showToast(t('toastShiftSaved'), 'ok');
   };
 
-  const confirmDelete = (shift) => {
+  const confirmDelete = async (shift) => {
     if (!confirm(t('confirmDeleteShift'))) return;
-    onDeleteShift(shift.id);
-    showToast(t('toastShiftDeleted'));
+    try {
+      await onDeleteShift(shift.id);
+      showToast(t('toastShiftDeleted'));
+    } catch (err) {
+      console.error('Delete failed:', err);
+      showToast(err.message || 'Fehler beim Löschen', 'err');
+    }
   };
 
   const employeeUsers = users.filter(u => u.role === 'employee');

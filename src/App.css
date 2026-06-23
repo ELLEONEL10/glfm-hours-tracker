@@ -209,8 +209,16 @@ html.dark {
 }
 
 html.dark .login-form { background:#1A1A1A; border-color:#333; }
-html.dark .login-form code { background:#333; }
+html.dark .login-form h2 { color:#FFFFFF; }
+html.dark .login-form p { color:#8A8A8A; }
+html.dark .login-form code { background:#333; color:#C8A96E; }
+html.dark .login-form input,
+html.dark .login-form select { background:#1F1F1F; color:#FFFFFF; border-color:#2A2A2A; }
 html.dark #screen-login { background:#0A0A0A; }
+html.dark .login-logo h1 { color:#FFFFFF; }
+html.dark .login-logo p { color:#8A8A8A; }
+html.dark .lang-btn { color:#8A8A8A; border-color:#333; }
+html.dark .lang-btn.active { color:#C8A96E; border-color:#C8A96E; }
 html.dark .sig-wrap { background:#1A1A1A; }
 html.dark .stat-card.accent { background:var(--black); }
 html.dark .stat-card.accent .stat-val { color:var(--accent); }
