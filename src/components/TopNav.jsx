@@ -24,6 +24,9 @@ export default function TopNav({ currentUser, onLogout }) {
         </div>
       </div>
       <div className="nav-right">
+        <button className="icon-btn" onClick={() => location.reload()} title={t('navRefresh')}>
+          🔄
+        </button>
         <button className="icon-btn" onClick={() => setDark(!dark)} title={dark ? 'Light' : 'Dark'}>
           {dark ? '☀️' : '🌙'}
         </button>
