@@ -1,0 +1,24 @@
+{
+  "name": "GLFM – Arbeitszeiterfassung",
+  "short_name": "GLFM Hours",
+  "description": "Arbeitszeiten und Schichtplan für GLFM",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0D0D0D",
+  "theme_color": "#C8A96E",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
