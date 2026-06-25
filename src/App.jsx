@@ -112,17 +112,25 @@ function AppContent() {
     setShowEntryModal(true);
   }, []);
 
-  const handleSaveEntry = useCallback((data) => {
-    saveEntry(data, editingEntry, currentUser);
-    setShowEntryModal(false);
-    setEditingEntry(null);
-    showToast(editingEntry ? t('toastEntryUpdated') : t('toastEntrySaved'), 'ok');
+  const handleSaveEntry = useCallback(async (data) => {
+    try {
+      await saveEntry(data, editingEntry, currentUser);
+      setShowEntryModal(false);
+      setEditingEntry(null);
+      showToast(editingEntry ? t('toastEntryUpdated') : t('toastEntrySaved'), 'ok');
+    } catch (err) {
+      showToast(err.message || t('loginError'), 'err');
+    }
   }, [saveEntry, editingEntry, currentUser, showToast, t]);
 
-  const handleDeleteEntry = useCallback((entry) => {
+  const handleDeleteEntry = useCallback(async (entry) => {
     if (!confirm(t('confirmDeleteEntry'))) return;
-    deleteEntry(entry.id);
-    showToast(t('toastEntryDeleted'));
+    try {
+      await deleteEntry(entry.id);
+      showToast(t('toastEntryDeleted'));
+    } catch (err) {
+      showToast(err.message || t('loginError'), 'err');
+    }
   }, [deleteEntry, showToast, t]);
 
   const handleCloseEntryModal = useCallback(() => {

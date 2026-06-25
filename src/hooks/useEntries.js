@@ -38,6 +38,7 @@ export function useEntries() {
       }
     } catch (err) {
       console.error('Save entry error:', err);
+      throw err;
     }
   }, []);
 
@@ -46,6 +47,7 @@ export function useEntries() {
       await deleteEntryDoc(id);
     } catch (err) {
       console.error('Delete entry error:', err);
+      throw err;
     }
   }, []);
 

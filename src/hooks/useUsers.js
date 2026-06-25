@@ -23,6 +23,7 @@ export function useUsers() {
       await deleteUserDoc(id);
     } catch (err) {
       console.error('Delete user error:', err);
+      throw err;
     }
   }, []);
 

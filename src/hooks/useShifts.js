@@ -19,15 +19,30 @@ export function useShifts() {
   }, []);
 
   const saveShift = useCallback(async (shiftData) => {
-    await createShift(shiftData);
+    try {
+      await createShift(shiftData);
+    } catch (err) {
+      console.error('Save shift error:', err);
+      throw err;
+    }
   }, []);
 
   const editShift = useCallback(async (id, data) => {
-    await updateShift(id, data);
+    try {
+      await updateShift(id, data);
+    } catch (err) {
+      console.error('Edit shift error:', err);
+      throw err;
+    }
   }, []);
 
   const deleteShift = useCallback(async (id) => {
-    await deleteShiftDoc(id);
+    try {
+      await deleteShiftDoc(id);
+    } catch (err) {
+      console.error('Delete shift error:', err);
+      throw err;
+    }
   }, []);
 
   return { shifts, loading, saveShift, editShift, deleteShift };
